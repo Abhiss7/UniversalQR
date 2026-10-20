@@ -7,7 +7,8 @@
     "packages/*"
   ],
   "scripts": {
-    "dev": "concurrently \"npm run dev --workspace=apps/frontend\" \"npm run dev --workspace=apps/backend\"",
+    "build:packages": "npm run build --workspace=packages/shared-types && npm run build --workspace=packages/shared-config",
+    "dev": "npm run build:packages && concurrently \"npm run dev --workspace=apps/frontend\" \"npm run dev --workspace=apps/backend\"",
     "build": "npm run build --workspace=packages/shared-types && npm run build --workspace=packages/shared-config && npm run build --workspace=apps/frontend && npm run build --workspace=apps/backend",
     "lint": "npm run lint --workspaces --if-present",
     "type-check": "npm run type-check --workspaces --if-present",

@@ -9,8 +9,10 @@
     "target": "ES2021",
     "sourceMap": true,
     "outDir": "./dist",
+    "rootDir": "./src",
     "baseUrl": "./",
     "incremental": true,
+    "tsBuildInfoFile": "./dist/tsconfig.tsbuildinfo",
     "skipLibCheck": true,
     "strictNullChecks": true,
     "noImplicitAny": true,
@@ -18,10 +20,10 @@
     "forceConsistentCasingInFileNames": true,
     "noFallthroughCasesInSwitch": true,
     "paths": {
-      "@universalqr/shared-types": ["../../packages/shared-types/src"],
-      "@universalqr/shared-config": ["../../packages/shared-config/src"]
+      "@universalqr/shared-types": ["../../packages/shared-types/dist"],
+      "@universalqr/shared-config": ["../../packages/shared-config/dist"]
     }
   },
-  "include": ["src/**/*", "prisma/**/*"],
+  "include": ["src/**/*"],
   "exclude": ["node_modules", "dist", "test"]
 }

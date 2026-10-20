@@ -3,7 +3,10 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
+    "build:packages": "tsc --project ../../packages/shared-types/tsconfig.json && tsc --project ../../packages/shared-config/tsconfig.json",
+    "prebuild": "npm run build:packages",
     "build": "nest build",
+    "predev": "npm run build:packages",
     "dev": "nest start --watch",
     "start": "node dist/main",
     "lint": "eslint \"{src,apps,libs,test}/**/*.ts\" --fix",

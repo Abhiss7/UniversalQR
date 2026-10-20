@@ -46,3 +46,10 @@ prisma/migrations/dev.db
 
 # Docker volumes
 postgres-data/
+
+# Project docs (local only)
+docs/ARCHITECTURE.md
+docs/DATABASE_DESIGN.md
+docs/IMPLEMENTATION_PLAN.md
+docs/PRODUCT_SPEC.md
+docs/TEST_PLAN.md
