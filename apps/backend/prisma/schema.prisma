@@ -1,0 +1,181 @@
+// UniversalQR — Prisma Schema
+// Free, multi-purpose dynamic QR code platform
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ─── Enums ────────────────────────────────────────────────────────────────────
+
+enum UserRole {
+  OWNER
+  ADMIN
+  EDITOR
+  VIEWER
+}
+
+enum QRCodeKind {
+  STATIC
+  DYNAMIC
+}
+
+enum QRCodeType {
+  URL
+  TEXT
+  EMAIL
+  PHONE
+  SMS
+  WIFI
+  VCARD
+  PDF
+  SOCIAL
+  LANDING_PAGE
+}
+
+// ─── Users ────────────────────────────────────────────────────────────────────
+
+model User {
+  id           String   @id @default(uuid())
+  email        String   @unique
+  passwordHash String   @map("password_hash")
+  name         String
+  avatarUrl    String?  @map("avatar_url")
+  isVerified   Boolean  @default(false) @map("is_verified")
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  memberships WorkspaceMember[]
+  sessions    UserSession[]
+
+  @@map("users")
+}
+
+model UserSession {
+  id           String   @id @default(uuid())
+  userId       String   @map("user_id")
+  refreshToken String   @unique @map("refresh_token")
+  expiresAt    DateTime @map("expires_at")
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("user_sessions")
+}
+
+// ─── Workspaces (Multi-tenant) ────────────────────────────────────────────────
+
+model Workspace {
+  id           String   @id @default(uuid())
+  name         String
+  slug         String   @unique
+  logoUrl      String?  @map("logo_url")
+  primaryColor String?  @map("primary_color")
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  members   WorkspaceMember[]
+  qrCodes   QRCode[]
+  campaigns Campaign[]
+
+  @@map("workspaces")
+}
+
+model WorkspaceMember {
+  id          String    @id @default(uuid())
+  workspaceId String    @map("workspace_id")
+  userId      String    @map("user_id")
+  role        UserRole  @default(VIEWER)
+  joinedAt    DateTime  @default(now()) @map("joined_at")
+
+  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([workspaceId, userId])
+  @@map("workspace_members")
+}
+
+// ─── QR Codes ─────────────────────────────────────────────────────────────────
+
+model QRCode {
+  id          String     @id @default(uuid())
+  workspaceId String     @map("workspace_id")
+  campaignId  String?    @map("campaign_id")
+  name        String
+  description String?
+  kind        QRCodeKind @default(STATIC)
+  type        QRCodeType @default(URL)
+
+  // For static QR: the encoded content (URL, text, etc.)
+  // For dynamic QR: the short-URL slug
+  destination String
+
+  // For dynamic QR: the current redirect target (updatable without reprinting)
+  targetUrl String? @map("target_url")
+
+  // Styling stored as JSON
+  style Json @default("{\"foregroundColor\":\"#000000\",\"backgroundColor\":\"#ffffff\",\"errorCorrectionLevel\":\"M\",\"margin\":4}")
+
+  imageUrl  String?  @map("image_url")
+  scanCount Int      @default(0) @map("scan_count")
+  isActive  Boolean  @default(true) @map("is_active")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  workspace  Workspace   @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  campaign   Campaign?   @relation(fields: [campaignId], references: [id])
+  scanEvents ScanEvent[]
+
+  @@index([workspaceId])
+  @@index([destination])
+  @@map("qr_codes")
+}
+
+// ─── Campaigns ────────────────────────────────────────────────────────────────
+
+model Campaign {
+  id          String    @id @default(uuid())
+  workspaceId String    @map("workspace_id")
+  name        String
+  description String?
+  startsAt    DateTime? @map("starts_at")
+  endsAt      DateTime? @map("ends_at")
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime  @updatedAt @map("updated_at")
+
+  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  qrCodes   QRCode[]
+
+  @@index([workspaceId])
+  @@map("campaigns")
+}
+
+// ─── Scan Analytics ───────────────────────────────────────────────────────────
+
+model ScanEvent {
+  id        String   @id @default(uuid())
+  qrCodeId  String   @map("qr_code_id")
+  scannedAt DateTime @default(now()) @map("scanned_at")
+
+  // Request metadata
+  ipAddress String? @map("ip_address")
+  userAgent String? @map("user_agent")
+
+  // Parsed / enriched fields (populated async)
+  country  String?
+  city     String?
+  device   String?
+  browser  String?
+  os       String?
+  referrer String?
+
+  qrCode QRCode @relation(fields: [qrCodeId], references: [id], onDelete: Cascade)
+
+  @@index([qrCodeId])
+  @@index([scannedAt])
+  @@map("scan_events")
+}

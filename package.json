@@ -1,0 +1,30 @@
+{
+  "name": "universalqr",
+  "version": "0.1.0",
+  "private": true,
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev": "concurrently \"npm run dev --workspace=apps/frontend\" \"npm run dev --workspace=apps/backend\"",
+    "build": "npm run build --workspace=packages/shared-types && npm run build --workspace=packages/shared-config && npm run build --workspace=apps/frontend && npm run build --workspace=apps/backend",
+    "lint": "npm run lint --workspaces --if-present",
+    "type-check": "npm run type-check --workspaces --if-present",
+    "test": "npm run test --workspaces --if-present",
+    "db:up": "docker compose up -d postgres",
+    "db:down": "docker compose down",
+    "db:migrate": "npm run prisma:migrate --workspace=apps/backend",
+    "db:studio": "npm run prisma:studio --workspace=apps/backend",
+    "clean": "rimraf apps/*/dist apps/*/.next apps/*/node_modules packages/*/dist node_modules"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2",
+    "rimraf": "^5.0.5",
+    "typescript": "^5.3.3"
+  },
+  "engines": {
+    "node": ">=18.0.0",
+    "npm": ">=9.0.0"
+  }
+}
